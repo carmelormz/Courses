@@ -12,6 +12,10 @@ function App() {
     setSelectedTopic(buttonId);
   };
 
+  const isActive = (topic) => {
+    return topic === selectedTopic;
+  };
+
   let tabContent = <p>Please select a topic.</p>;
 
   if (selectedTopic) {
@@ -41,12 +45,30 @@ function App() {
         <section id="examples">
           <h2>Examples</h2>
           <menu>
-            <TabButton onClick={() => clickHandler("components")}>
+            <TabButton
+              onClick={() => clickHandler("components")}
+              isActive={isActive("components")}
+            >
               Components
             </TabButton>
-            <TabButton onClick={() => clickHandler("jsx")}>JSX</TabButton>
-            <TabButton onClick={() => clickHandler("props")}>Props</TabButton>
-            <TabButton onClick={() => clickHandler("state")}>State</TabButton>
+            <TabButton
+              onClick={() => clickHandler("jsx")}
+              isActive={isActive("jsx")}
+            >
+              JSX
+            </TabButton>
+            <TabButton
+              onClick={() => clickHandler("props")}
+              isActive={isActive("props")}
+            >
+              Props
+            </TabButton>
+            <TabButton
+              onClick={() => clickHandler("state")}
+              isActive={isActive("state")}
+            >
+              State
+            </TabButton>
           </menu>
           {tabContent}
         </section>
