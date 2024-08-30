@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function Player({ initialName, symbol, isActive }) {
+export default function Player({ initialName, symbol, isActive, onSave }) {
   const [playerName, setPlayerName] = useState(initialName);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -8,6 +8,10 @@ export default function Player({ initialName, symbol, isActive }) {
     // Since we are updating a react state based on the state old/previous value
     // is recommended to update by passing a function that sets the desired updated value
     setIsEditing((wasEditing) => !wasEditing);
+
+    if (isEditing) {
+      onSave(symbol, playerName);
+    }
   };
 
   const handleInputChange = (e) => {
