@@ -12,8 +12,9 @@ export const TimerChallenge = ({ title, targetTime }) => {
   const handleStart = () => {
     timer.current = setTimeout(() => {
       setTimerExpired(true);
-      dialog.current.showModal();
+      dialog.current.open();
     }, targetTime * 1000);
+
     setTimerStarted(true);
   };
 
