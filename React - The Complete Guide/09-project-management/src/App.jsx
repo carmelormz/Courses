@@ -87,6 +87,11 @@ function App() {
     });
   };
 
+  /**
+   * Handles add new task.
+   * Adds new tasks to the tasks array state
+   * @param {object} task
+   */
   const handleAddTask = (task) => {
     setProjectsState((prevProjectsState) => {
       const newTask = {
@@ -102,6 +107,10 @@ function App() {
     });
   };
 
+  /**
+   * Removes a task from the state via the task id.
+   * @param {number} taskId
+   */
   const handleDeleteTask = (taskId) => {
     setProjectsState((prevProjectsState) => {
       const updatedTasks = prevProjectsState.tasks.filter(
