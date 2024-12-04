@@ -1,3 +1,6 @@
+import { SELECTED_PLACES_KEY } from './enums.js';
+import { AVAILABLE_PLACES } from './data.js';
+
 function toRad(value) {
   return (value * Math.PI) / 180;
 }
@@ -25,4 +28,11 @@ export function sortPlacesByDistance(places, lat, lon) {
     return distanceA - distanceB;
   });
   return sortedPlaces;
+}
+
+export function getStoredPlaces() {
+  const storedIds = JSON.parse(localStorage.getItem(SELECTED_PLACES_KEY)) || [];
+  return storedIds.map((id) =>
+    AVAILABLE_PLACES.find((place) => place.id === id)
+  );
 }
