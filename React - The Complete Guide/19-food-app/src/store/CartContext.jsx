@@ -67,7 +67,7 @@ export function CartContextProvider({ children }) {
   const cartContext = {
     items: cart.items,
     addItem,
-    removeItem: () => {},
+    removeItem,
   };
 
   // < React v19 => <CartContext.Provider></CartContext.Provider>
