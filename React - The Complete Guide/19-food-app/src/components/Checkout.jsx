@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useActionState } from 'react';
 import Modal from './UI/Modal';
 import CartContext from '../store/CartContext';
 import UserProgressContext from '../store/UserProgressContext';
@@ -18,7 +18,7 @@ const httpRequestConfig = {
 export default function Checkout() {
   const { items, clearCart } = useContext(CartContext);
   const { progress, hideCheckout } = useContext(UserProgressContext);
-  const { data, isLoading, error, sendRequest, clearData } = useHttp(
+  const { data, error, sendRequest, clearData } = useHttp(
     'http://localhost:3000/orders',
     httpRequestConfig
   );
@@ -38,13 +38,25 @@ export default function Checkout() {
     clearData();
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
 
-    const formData = new FormData(e.target);
+  //   const formData = new FormData(e.target);
+  //   const customerData = Object.fromEntries(formData.entries());
+
+  //   sendRequest(
+  //     JSON.stringify({
+  //       order: {
+  //         items,
+  //         customer: customerData,
+  //       },
+  //     })
+  //   );
+  // };
+
+  const checkoutAction = async (prevState, formData) => {
     const customerData = Object.fromEntries(formData.entries());
-
-    sendRequest(
+    await sendRequest(
       JSON.stringify({
         order: {
           items,
@@ -54,20 +66,12 @@ export default function Checkout() {
     );
   };
 
-  const isUserInCheckout = progress === 'CHECKOUT';
-
-  let actions = (
-    <>
-      <Button textOnly type='button' onClick={handleClose}>
-        Close
-      </Button>
-      <Button>Submit Order</Button>
-    </>
+  const [formState, formAction, isSending] = useActionState(
+    checkoutAction,
+    null
   );
 
-  if (isLoading) {
-    actions = <span>Sending order data...</span>;
-  }
+  const isUserInCheckout = progress === 'CHECKOUT';
 
   if (data && !error) {
     return (
@@ -84,12 +88,25 @@ export default function Checkout() {
     );
   }
 
+  let actions = (
+    <>
+      <Button textOnly type='button' onClick={handleClose}>
+        Close
+      </Button>
+      <Button>Submit Order</Button>
+    </>
+  );
+
+  if (isSending) {
+    actions = <span>Sending order data...</span>;
+  }
+
   return (
     <Modal
       open={isUserInCheckout}
       onClose={isUserInCheckout ? handleClose : null}
     >
-      <form onSubmit={handleSubmit}>
+      <form action={formAction}>
         <h2>Checkout</h2>
         <p>Total Amount: {currencyFormatter.format(totalAmountDue)}</p>
         <Input label='Full Name' type='text' id='name' />
