@@ -19,6 +19,26 @@ export default function Checkout() {
     hideCheckout();
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const customerData = Object.fromEntries(formData.entries());
+
+    fetch('http://localhost:3000/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        order: {
+          items,
+          customer: customerData,
+        },
+      }),
+    });
+  };
+
   const isUserInCheckout = progress === 'CHECKOUT';
 
   return (
@@ -26,10 +46,10 @@ export default function Checkout() {
       open={isUserInCheckout}
       onClose={isUserInCheckout ? handleClose : null}
     >
-      <form>
+      <form onSubmit={handleSubmit}>
         <h2>Checkout</h2>
         <p>Total Amount: {currencyFormatter.format(totalAmountDue)}</p>
-        <Input label='Full Name' type='text' id='full-name' />
+        <Input label='Full Name' type='text' id='name' />
         <Input label='Email Address' type='email' id='email' />
         <Input label='Street' type='text' id='street' />
         <div className='control-row'>
