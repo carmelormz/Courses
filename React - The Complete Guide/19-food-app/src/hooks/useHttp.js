@@ -18,16 +18,23 @@ export default function useHttp(url, config, initialValue) {
   const [error, setError] = useState();
   const [isLoading, setIsLoading] = useState(false);
 
-  const sendRequest = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const resData = await sendHttpRequest(url, config);
-      setData(resData);
-    } catch (err) {
-      setError(err.message || 'Something went wrong.');
-    }
-    setIsLoading(false);
-  }, [url, config]);
+  const clearData = () => {
+    setData(initialValue);
+  };
+
+  const sendRequest = useCallback(
+    async (data) => {
+      setIsLoading(true);
+      try {
+        const resData = await sendHttpRequest(url, { ...config, body: data });
+        setData(resData);
+      } catch (err) {
+        setError(err.message || 'Something went wrong.');
+      }
+      setIsLoading(false);
+    },
+    [url, config]
+  );
 
   // This useEffect purpose is to make the http request without the user manual call
   // , only for GET methods.
@@ -42,5 +49,6 @@ export default function useHttp(url, config, initialValue) {
     isLoading,
     error,
     sendRequest,
+    clearData,
   };
 }
