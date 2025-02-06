@@ -4,11 +4,11 @@ import EventsList from '../components/EventsList';
 import { Suspense } from 'react';
 
 export default function EventsPage() {
-  const { events } = useLoaderData();
+  const { events: eventsPromise } = useLoaderData();
 
   return (
     <Suspense fallback={<p style={{ textAlign: 'center' }}>Loading...</p>}>
-      <Await resolve={events}>
+      <Await resolve={eventsPromise}>
         {(loadedEvents) => <EventsList events={loadedEvents} />}
       </Await>
     </Suspense>
@@ -25,7 +25,6 @@ const loadEvents = async () => {
   }
 
   const resData = await response.json();
-  console.log(resData);
   return resData.events;
 };
 
