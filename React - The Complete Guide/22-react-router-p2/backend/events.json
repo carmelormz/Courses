@@ -1,11 +1,1 @@
-{
-  "events": [
-    {
-      "id": "e1",
-      "title": "A dummy event",
-      "date": "2023-02-22",
-      "image": "https://blog.hubspot.de/hubfs/Germany/Blog_images/Optimize_Marketing%20Events%20DACH%202021.jpg",
-      "description": "Join this amazing event and connect with fellow developers."
-    }
-  ]
-}
+{"events":[{"title":"Halloween Party","image":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7dFsyActeIOl8ycr_lT560Wi0kc6vY9lWbg&s","date":"2025-10-31","description":"A terrifying halloween party!","id":"5cd4b4c4-069f-4a47-9a53-19091c794f21"},{"title":"Thanksgiving Party!!!","image":"https://happydaycatering.com/wp-content/uploads/2017/10/thanksgiving-table.jpg","date":"2025-11-26","description":"An awesome thanksgiving party.","id":"b29b7bb8-b400-40bb-be22-9fcd87b826d7"},{"title":"Christmas party!","image":"https://hips.hearstapps.com/hmg-prod/images/family-toasting-on-christmas-dinner-at-home-royalty-free-image-1699896250.jpg?crop=1xw:0.84236xh;center,top&resize=1200:*","date":"2024-12-25","description":"This is an awesome christmas party!","id":"5cd4c425-c1f4-4295-b617-4aa2d0593f59"},{"id":"e1","title":"A dummy event","date":"2023-02-22","image":"https://blog.hubspot.de/hubfs/Germany/Blog_images/Optimize_Marketing%20Events%20DACH%202021.jpg","description":"Join this amazing event and connect with fellow developers."}]}
