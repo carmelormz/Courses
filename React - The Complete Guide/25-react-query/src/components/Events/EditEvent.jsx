@@ -28,6 +28,7 @@ export default function EditEvent() {
   } = useQuery({
     queryKey: ['events', { id }],
     queryFn: (objConf) => fetchEvent({ ...objConf, id }),
+    staleTime: 5000,
   });
 
   // If using Optimistic Updating:
