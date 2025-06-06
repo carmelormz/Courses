@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { saveMeal } from './meals';
+import { revalidatePath } from 'next/cache';
 
 function isInvalidValue(text) {
   return !text || text.trim() === '';
@@ -33,6 +34,10 @@ export async function shareMeal(prevState, formData) {
   }
 
   await saveMeal(meal);
+
+  // Invalidate cache of '/meals' page to show the newest data.
+  // Can include a second parameter to invalidate all children/nested pages in a path. (ie. 'layout')
+  revalidatePath('/meals');
 
   redirect('/meals');
 }
