@@ -1,4 +1,5 @@
 import { useContext, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 
 import { ChallengesContext } from '../store/challenges-context.jsx';
 import Modal from './Modal.jsx';
@@ -39,37 +40,45 @@ export default function NewChallenge({ onDone }) {
   }
 
   return (
-    <Modal title="New Challenge" onClose={onDone}>
-      <form id="new-challenge" onSubmit={handleSubmit}>
+    <Modal title='New Challenge' onClose={onDone}>
+      <form id='new-challenge' onSubmit={handleSubmit}>
         <p>
-          <label htmlFor="title">Title</label>
-          <input ref={title} type="text" name="title" id="title" />
+          <label htmlFor='title'>Title</label>
+          <input ref={title} type='text' name='title' id='title' />
         </p>
 
         <p>
-          <label htmlFor="description">Description</label>
-          <textarea ref={description} name="description" id="description" />
+          <label htmlFor='description'>Description</label>
+          <textarea ref={description} name='description' id='description' />
         </p>
 
         <p>
-          <label htmlFor="deadline">Deadline</label>
-          <input ref={deadline} type="date" name="deadline" id="deadline" />
+          <label htmlFor='deadline'>Deadline</label>
+          <input ref={deadline} type='date' name='deadline' id='deadline' />
         </p>
 
-        <ul id="new-challenge-images">
+        <ul id='new-challenge-images'>
           {images.map((image) => (
-            <li
+            <motion.li
               key={image.alt}
               onClick={() => handleSelectImage(image)}
               className={selectedImage === image ? 'selected' : undefined}
+              variants={{
+                hidden: { opacity: 0, scale: 0.5 },
+                visible: {
+                  opacity: 1,
+                  scale: 1,
+                  transition: { type: 'spring' },
+                },
+              }}
             >
               <img {...image} />
-            </li>
+            </motion.li>
           ))}
         </ul>
 
-        <p className="new-challenge-actions">
-          <button type="button" onClick={onDone}>
+        <p className='new-challenge-actions'>
+          <button type='button' onClick={onDone}>
             Cancel
           </button>
           <button>Add Challenge</button>
