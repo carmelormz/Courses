@@ -10,7 +10,7 @@ function Tab({ isSelected, onSelect, badgeCaption, children }) {
         onClick={onSelect}
       >
         {children}
-        <Badge caption={badgeCaption}></Badge>
+        <Badge key={`badge-${badgeCaption}`} caption={badgeCaption}></Badge>
       </button>
       {isSelected && (
         <motion.div layoutId='tab-indicator' className='active-tab-indicator' />
