@@ -5,10 +5,10 @@ export interface Place {
     description: string;
     address: string;
     creator: string;
-    location: Coordinate
+    location: google.maps.LatLngLiteral
 }
 
 export interface Coordinate {
     lat: number;
-    long: number;
+    lng: number;
 }
