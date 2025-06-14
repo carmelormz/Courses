@@ -2,6 +2,8 @@ import type { PropsWithChildren } from 'react';
 
 import UserItem from './UserItem';
 import type { User } from '../../models/user';
+import Card from '../../shared/components/UIElements/Card';
+
 import './UsersList.css';
 
 interface Props extends PropsWithChildren {
@@ -10,7 +12,13 @@ interface Props extends PropsWithChildren {
 
 const UsersList: React.FC<Props> = ({ items }) => {
   if (items.length === 0) {
-    return <div className='center'>No users found.</div>;
+    return (
+      <div className='center'>
+        <Card>
+          <h2>No users found.</h2>
+        </Card>
+      </div>
+    );
   }
 
   return (
