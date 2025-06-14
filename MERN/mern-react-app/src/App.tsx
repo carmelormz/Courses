@@ -1,5 +1,20 @@
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import Users from './user/pages/Users';
+import Places from './places/pages/Places';
+
+const router = createBrowserRouter([
+  {
+    path: '/new',
+    Component: Places,
+  },
+  {
+    path: '*',
+    Component: Users,
+  },
+]);
+
 function App() {
-  return <h1>Let's start!</h1>;
+  return <RouterProvider router={router} />;
 }
 
 export default App;
