@@ -9,6 +9,8 @@ import {
 import type { Place } from '../../models/place';
 
 import './PlaceForm.css';
+import useForm from '../../shared/hooks/form-hook';
+import type { FormEvent } from 'react';
 
 const DUMMY_PLACES_: Place[] = [
   {
@@ -42,11 +44,30 @@ const DUMMY_PLACES_: Place[] = [
 const UpdatePlace: React.FC = () => {
   const { pid } = useParams();
 
-  const identifiedPlace: Place = DUMMY_PLACES_.find(
+  const identifiedPlace: Place | undefined = DUMMY_PLACES_.find(
     (place) => place.id === pid
   );
 
-  const inputHandler = () => {};
+  const [formState, inputChangeHandler] = useForm(
+    {
+      title: {
+        value: identifiedPlace?.title || '',
+        isValid: true,
+      },
+      description: {
+        value: identifiedPlace?.description || '',
+        isValid: true,
+      },
+    },
+    true
+  );
+
+  const { inputs, isValid } = formState;
+
+  const palceUpdateSubmitHandler = (e: FormEvent) => {
+    e.preventDefault();
+    console.log(inputs);
+  };
 
   if (!identifiedPlace) {
     return (
@@ -57,7 +78,7 @@ const UpdatePlace: React.FC = () => {
   }
 
   return (
-    <form className='place-form'>
+    <form className='place-form' onSubmit={palceUpdateSubmitHandler}>
       <Input
         id='title'
         element='input'
@@ -65,9 +86,9 @@ const UpdatePlace: React.FC = () => {
         label='Title'
         validators={[VALIDATOR_REQUIRE()]}
         errorText='Please enter a valid title.'
-        onInput={() => {}}
-        value={identifiedPlace?.title}
-        valid={true}
+        onInput={inputChangeHandler}
+        value={inputs.title.value}
+        valid={inputs.title.isValid}
       />
       <Input
         id='description'
@@ -75,11 +96,11 @@ const UpdatePlace: React.FC = () => {
         label='Description'
         validators={[VALIDATOR_MINLENGTH(5)]}
         errorText='Please enter a valid description (At least 5 characters).'
-        onInput={() => {}}
-        value={identifiedPlace?.description}
-        valid={true}
+        onInput={inputChangeHandler}
+        value={inputs.description.value}
+        valid={inputs.description.isValid}
       />
-      <Button type='submit' disabled={true}>
+      <Button type='submit' disabled={!isValid}>
         Update Place
       </Button>
     </form>
