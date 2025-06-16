@@ -66,6 +66,8 @@ interface Props extends InputProps, TextareaProps {
   errorText?: string;
   validators: Validator[];
   onInput: (id: string, value: string, isValid: boolean) => void;
+  value?: string;
+  valid?: boolean;
 }
 
 const Input: React.FC<Props> = ({
@@ -78,10 +80,12 @@ const Input: React.FC<Props> = ({
   errorText,
   validators,
   onInput,
+  value: initialValue,
+  valid = false,
 }) => {
   const [{ value, isValid, isTouched }, dispatch] = useReducer(inputReducer, {
-    value: '',
-    isValid: false,
+    value: initialValue,
+    isValid: valid,
     isTouched: false,
   });
 
@@ -121,6 +125,7 @@ const Input: React.FC<Props> = ({
         rows={rows}
         onChange={changeHandler}
         onBlur={touchHandler}
+        value={value}
       />
     );
   }

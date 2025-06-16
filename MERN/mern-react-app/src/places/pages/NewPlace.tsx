@@ -6,7 +6,7 @@ import {
   VALIDATOR_REQUIRE,
 } from '../../shared/util/validators';
 
-import './NewPlace.css';
+import './PlaceForm.css';
 import Button from '../../shared/components/FormElements/Button';
 
 enum FormActionType {
@@ -78,6 +78,10 @@ const NewPlace: React.FC = () => {
         isValid: false,
       },
       description: {
+        value: '',
+        isValid: false,
+      },
+      address: {
         value: '',
         isValid: false,
       },

@@ -23,7 +23,7 @@ const router = createBrowserRouter([
         Component: UserPlaces,
       },
       {
-        path: '/places/:uid',
+        path: '/places/:pid',
         Component: UpdatePlace,
       },
     ],
