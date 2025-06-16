@@ -3,6 +3,7 @@ import Users from './user/pages/Users';
 import Root from './Root';
 import UserPlaces from './places/pages/UserPlaces';
 import NewPlace from './places/pages/NewPlace';
+import UpdatePlace from './places/pages/UpdatePlace';
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       {
         path: '/:uid/places',
         Component: UserPlaces,
+      },
+      {
+        path: '/places/:uid',
+        Component: UpdatePlace,
       },
     ],
   },

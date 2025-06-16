@@ -1,5 +1,6 @@
 import {
   useReducer,
+  useEffect,
   type ChangeEvent,
   type HTMLInputTypeAttribute,
   type ReactNode,
@@ -64,6 +65,7 @@ interface Props extends InputProps, TextareaProps {
   placeholder?: string;
   errorText?: string;
   validators: Validator[];
+  onInput: (id: string, value: string, isValid: boolean) => void;
 }
 
 const Input: React.FC<Props> = ({
@@ -75,6 +77,7 @@ const Input: React.FC<Props> = ({
   rows = 3,
   errorText,
   validators,
+  onInput,
 }) => {
   const [{ value, isValid, isTouched }, dispatch] = useReducer(inputReducer, {
     value: '',
@@ -83,6 +86,10 @@ const Input: React.FC<Props> = ({
   });
 
   let inputEl: ReactNode;
+
+  useEffect(() => {
+    onInput(id, value ?? '', isValid);
+  }, [id, value, isValid, onInput]);
 
   const changeHandler = (e: InputChangeEvent) => {
     dispatch({
