@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import Input from '../../shared/components/FormElements/Input';
@@ -10,7 +11,7 @@ import type { Place } from '../../models/place';
 
 import './PlaceForm.css';
 import useForm from '../../shared/hooks/form-hook';
-import type { FormEvent } from 'react';
+import { useEffect, type FormEvent } from 'react';
 
 const DUMMY_PLACES_: Place[] = [
   {
@@ -43,26 +44,44 @@ const DUMMY_PLACES_: Place[] = [
 
 const UpdatePlace: React.FC = () => {
   const { pid } = useParams();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const [formState, inputChangeHandler, setFormData] = useForm(
+    {
+      title: {
+        value: '',
+        isValid: false,
+      },
+      description: {
+        value: '',
+        isValid: false,
+      },
+    },
+    false
+  );
+
+  const { inputs, isValid } = formState;
 
   const identifiedPlace: Place | undefined = DUMMY_PLACES_.find(
     (place) => place.id === pid
   );
 
-  const [formState, inputChangeHandler] = useForm(
-    {
-      title: {
-        value: identifiedPlace?.title || '',
-        isValid: true,
+  useEffect(() => {
+    setFormData(
+      {
+        title: {
+          value: identifiedPlace?.title || '',
+          isValid: true,
+        },
+        description: {
+          value: identifiedPlace?.description || '',
+          isValid: true,
+        },
       },
-      description: {
-        value: identifiedPlace?.description || '',
-        isValid: true,
-      },
-    },
-    true
-  );
-
-  const { inputs, isValid } = formState;
+      true
+    );
+    setIsLoading(false);
+  }, [setFormData, identifiedPlace]);
 
   const palceUpdateSubmitHandler = (e: FormEvent) => {
     e.preventDefault();
@@ -73,6 +92,14 @@ const UpdatePlace: React.FC = () => {
     return (
       <div className='center'>
         <h2>Could not find place!</h2>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className='center'>
+        <h2>Loading...</h2>
       </div>
     );
   }
