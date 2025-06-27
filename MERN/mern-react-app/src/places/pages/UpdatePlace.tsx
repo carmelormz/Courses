@@ -12,6 +12,7 @@ import type { Place } from '../../models/place';
 import './PlaceForm.css';
 import useForm from '../../shared/hooks/form-hook';
 import { useEffect, type FormEvent } from 'react';
+import Card from '../../shared/components/UIElements/Card';
 
 const DUMMY_PLACES_: Place[] = [
   {
@@ -67,6 +68,11 @@ const UpdatePlace: React.FC = () => {
   );
 
   useEffect(() => {
+    if (!identifiedPlace) {
+      setIsLoading(false);
+      return;
+    }
+
     setFormData(
       {
         title: {
@@ -90,9 +96,11 @@ const UpdatePlace: React.FC = () => {
 
   if (!identifiedPlace) {
     return (
-      <div className='center'>
-        <h2>Could not find place!</h2>
-      </div>
+      <Card>
+        <div className='center'>
+          <h2>Could not find place!</h2>
+        </div>
+      </Card>
     );
   }
 

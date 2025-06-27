@@ -20,6 +20,7 @@ const PlaceItem: React.FC<Props> = ({
   location,
 }) => {
   const [showMap, setShowMap] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const openMapHandler = () => {
     setShowMap(true);
@@ -29,7 +30,31 @@ const PlaceItem: React.FC<Props> = ({
     setShowMap(false);
   };
 
-  const modalFooter = <Button onClick={closeMapHandler}>Close</Button>;
+  const openDeleteModalHandler = () => {
+    setShowDeleteModal(true);
+  };
+
+  const cancelDeleteModalHandler = () => {
+    setShowDeleteModal(false);
+  };
+
+  const confirmDeleteHandler = () => {
+    setShowDeleteModal(false);
+    console.log('Deleting...');
+  };
+
+  const mapModalFooter = <Button onClick={closeMapHandler}>Close</Button>;
+
+  const deleteModalFooter = (
+    <>
+      <Button inverse onClick={cancelDeleteModalHandler}>
+        Cancel
+      </Button>
+      <Button danger onClick={confirmDeleteHandler}>
+        Delete
+      </Button>
+    </>
+  );
 
   return (
     <>
@@ -40,11 +65,25 @@ const PlaceItem: React.FC<Props> = ({
           header={address}
           contentClass='place-item__modal-content'
           footerClass='place-item__modal-actions'
-          footer={modalFooter}
+          footer={mapModalFooter}
         >
           <div className='map-container'>
             <Map center={location} zoom={16} />
           </div>
+        </Modal>
+      </AnimatePresence>
+      <AnimatePresence>
+        <Modal
+          show={showDeleteModal}
+          onCancel={cancelDeleteModalHandler}
+          header='Are you sure?'
+          footerClass='place-item__modal_actions'
+          footer={deleteModalFooter}
+        >
+          <p>
+            Do you want to proceed and delete this place? Please not that it
+            can't be undone.
+          </p>
         </Modal>
       </AnimatePresence>
       <li className='place-item'>
@@ -62,7 +101,9 @@ const PlaceItem: React.FC<Props> = ({
               View On Map
             </Button>
             <Button to={`/places/${id}`}>Edit</Button>
-            <Button danger>Delete</Button>
+            <Button danger onClick={openDeleteModalHandler}>
+              Delete
+            </Button>
           </div>
         </Card>
       </li>

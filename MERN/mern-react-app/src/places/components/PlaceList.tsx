@@ -4,6 +4,7 @@ import './PlaceList.css';
 import Card from '../../shared/components/UIElements/Card';
 import PlaceItem from './PlaceItem';
 import type { Place } from '../../models/place';
+import Button from '../../shared/components/FormElements/Button';
 
 interface Props extends PropsWithChildren {
   items: Place[];
@@ -15,7 +16,7 @@ const PlaceList: React.FC<Props> = ({ items }) => {
       <div className='place-list center'>
         <Card>
           <h2>No places found.</h2>
-          <button>Share Place</button>
+          <Button to='/places/new'>Share Place</Button>
         </Card>
       </div>
     );
