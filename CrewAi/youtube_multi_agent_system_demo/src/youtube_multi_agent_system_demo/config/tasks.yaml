@@ -1,0 +1,15 @@
+research_task:
+  description: >
+    Research and extract key insights from the given YouTube video regarding Educative. 
+    Compile your findings in a detailed summary.
+  expected_output: >
+    A summary of the key insights from the YouTube video.
+  agent: researcher
+
+writing_task:
+  description: >
+    Using the summary provided by the researcher, write a compelling article on what is Educative. 
+    Ensure the article is well-structured and engaging for a tech-savvy audience.
+  expected_output: >
+    A well-written article on Educative based on the YouTube video research.
+  agent: writer

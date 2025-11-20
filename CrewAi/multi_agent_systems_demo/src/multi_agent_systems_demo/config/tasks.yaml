@@ -1,0 +1,29 @@
+data_collection_task:
+  description: >
+    Collect data from relevant sources about the given {topic}.
+    Focus on indentifying key trends, benefits, and challenges.
+    Try to keep the findings as concise, short, and precise and possible.
+  expected_output: >
+    A comprehensive dataset that includes recent studies, statistics, and expert opinions.
+  agent: research_analyst_agent
+
+data_analysis_task:
+  description: >
+    Analyze the collected data to identify key trends, benefits, and challenges for the given {topic}.
+  expected_output: >
+    A detailed analysis report highlighting the most significant findings.
+  agent: research_analyst_agent
+
+report_writing_task:
+  description: >
+    Write a comprehensive research report that clearly presents the findings from the data analysis report.
+  expected_output: >
+    A well-structured research report that provids insights about the topic.
+  agent: report_writer_agent
+
+report_assessment_task:
+  description: >
+    Review and rewrite the research report to ensure clarity, accuracy, and adherence to standards.
+  expected_output: >
+    A polished, coherent research report that meets high-quality standards and effectively communicates the findings.
+  agent: report_editor_agent
