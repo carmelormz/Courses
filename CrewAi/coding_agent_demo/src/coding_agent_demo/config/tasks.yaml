@@ -1,0 +1,20 @@
+data_analysis_task:
+  description: >
+    Write Python code to calculate the average of the following list of ages: [23, 35, 31, 29, 40]. 
+    Output the result in the following format: 'The average age of participants is: <calculated_avarage_age>'
+  expected_output: >
+    The generated code lines based on the requirements and the average age of participants is: <calculated_average_age>.
+  agent:
+
+debug_task:
+  description: >
+    The following Python code is supposed to return the square of each number in the list, 
+    but it contains a bug. Please identify and fix the bug:\n
+    ```\n
+    numbers = [2, 4, 6, 8]\n
+    squared_numbers = [n*m for n in numbers]\n
+    print(squared_numbers)
+    ```
+  expected_output: >
+    The corrected code should output the squares of the numbers in the list. Provide the updated code and tell what was the bug and how you fixed it.
+  agent: debugging_agent
