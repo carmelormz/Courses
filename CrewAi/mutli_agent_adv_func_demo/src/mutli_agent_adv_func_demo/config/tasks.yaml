@@ -1,0 +1,21 @@
+fetch_task:
+  description: >
+    Collect event data from New York City using Serper tool.
+  expected_output: >
+    A list of 8 exciting events happening in NYC this week.
+  agent: data_collector
+
+verify_data_task:
+  description: >
+    Ensure that sufficient event data has been collected.
+    If fewer than 8 events are found, gather more using the Serper tool.
+  expected_output: >
+    An updated list of at least 8 events happening in NYC this week.
+  agent: data_analyzer
+
+summary_task:
+  description: >
+    Summarize the collected events data for NYC.
+  expected_output: >
+    summary_generated
+  agent: summary_creator
