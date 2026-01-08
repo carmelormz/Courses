@@ -1,0 +1,18 @@
+{
+  "records": [
+    {
+      "id": 1,
+      "course_name": "Agentic Design Patterns in LLMs",
+      "status": "Available",
+      "description": "An advanced course on building robust, scalable AI agents using patterns like Routing, Orchestration, and Prompt Chaining.",
+      "next_release": "Q4 2025"
+    },
+    {
+      "id": 2,
+      "course_name": "Introduction to Python",
+      "status": "Available",
+      "description": "A beginner-friendly course covering the fundamentals of Python programming.",
+      "next_release": null
+    }
+  ]
+}
