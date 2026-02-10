@@ -23,28 +23,36 @@ load_dotenv()
 
 
 # MCP server launch config
-server_params = StdioServerParameters(
-    command="python3",
-    args=["weather_server.py"]
-)
+server_params = StdioServerParameters(command="python3", args=["weather_server.py"])
+
 
 # LangGraph state definition
 class State(TypedDict):
     messages: Annotated[List[AnyMessage], add_messages]
+
 
 async def create_graph(session):
     # Load tools from MCP server
     tools = await load_mcp_tools(session)
 
     # LLM configuration
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0, google_api_key=os.getenv("GOOGLE_GEMINI_API_KEY"))
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash",
+        temperature=0,
+        google_api_key=os.getenv("GOOGLE_GEMINI_API_KEY"),
+    )
     llm_with_tools = llm.bind_tools(tools)
 
     # Prompt template with user/assistant chat only
-    prompt_template = ChatPromptTemplate.from_messages([
-        ("system", "You are a helpful assistant that uses tools to get the current weather for a location."),
-        MessagesPlaceholder("messages")
-    ])
+    prompt_template = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "You are a helpful assistant that uses tools to get the current weather for a location.",
+            ),
+            MessagesPlaceholder("messages"),
+        ]
+    )
 
     chat_llm = prompt_template | llm_with_tools
 
@@ -58,13 +66,13 @@ async def create_graph(session):
     graph.add_node("chat_node", chat_node)
     graph.add_node("tool_node", ToolNode(tools=tools))
     graph.add_edge(START, "chat_node")
-    graph.add_conditional_edges("chat_node", tools_condition, {
-        "tools": "tool_node",
-        "__end__": END
-    })
+    graph.add_conditional_edges(
+        "chat_node", tools_condition, {"tools": "tool_node", "__end__": END}
+    )
     graph.add_edge("tool_node", "chat_node")
-    
+
     return graph.compile(checkpointer=MemorySaver())
+
 
 async def list_prompts(session):
     """
@@ -77,7 +85,7 @@ async def list_prompts(session):
         if not prompt_response or not prompt_response.prompts:
             print("\nNo prompts were found on the server.")
             return
-        
+
         print("\nAvailable Prompts and their Arguments:")
         print("---------------------------------------")
         for p in prompt_response.prompts:
@@ -87,12 +95,13 @@ async def list_prompts(session):
                 print(f"    Arguments: {' '.join(args_list)}")
             else:
                 print("     Arguments: None")
-        
-        print("\nUsage: /prompt <prompt_name> \"arg1\" \"arg2\" ....")
+
+        print('\nUsage: /prompt <prompt_name> "arg1" "arg2" ....')
         print("---------------------------------------")
 
     except Exception as e:
         print(f"Error fetching prompts: {e}")
+
 
 async def handle_prompt(session, command: str) -> str | None:
     """
@@ -103,7 +112,7 @@ async def handle_prompt(session, command: str) -> str | None:
     try:
         parts = shlex.split(command.strip())
         if len(parts) < 2:
-            print(f"Usage: /prompt <prompt_name> \"arg1\" \"arg2\" ...")
+            print(f'Usage: /prompt <prompt_name> "arg1" "arg2" ...')
             return None
 
         prompt_name = parts[1]
@@ -114,9 +123,11 @@ async def handle_prompt(session, command: str) -> str | None:
         if not prompt_def_response or not prompt_def_response.prompts:
             print("\nError: Could not retrieve any prompts from the server.")
             return None
-        
+
         # Find the specific prompt definition the user is asking for
-        prompt_def = next((p for p in prompt_def_response.prompts if p.name == prompt_name), None)
+        prompt_def = next(
+            (p for p in prompt_def_response.prompts if p.name == prompt_name), None
+        )
 
         if not prompt_def:
             print(f"\nError: Prompt '{prompt_name}' not found in server.")
@@ -126,9 +137,11 @@ async def handle_prompt(session, command: str) -> str | None:
         if len(user_args) != len(prompt_def.arguments):
             expected_args = [arg.name for arg in prompt_def.arguments]
             print(f"\nError: Invalid number of argments for prompt '{prompt_name}")
-            print(f"Expected {len(expected_args)} arguments: {', '.join(expected_args)}")
+            print(
+                f"Expected {len(expected_args)} arguments: {', '.join(expected_args)}"
+            )
             return None
-        
+
         # Build the argument dictionary
         arg_dict = {arg.name: val for arg, val in zip(prompt_def.arguments, user_args)}
 
@@ -145,6 +158,78 @@ async def handle_prompt(session, command: str) -> str | None:
         print(f"\nAn error ocurred during prompt invocation: {e}")
         return None
 
+
+async def list_resources(session):
+    """
+    Fetches the list of available resources from the connected server and prints them in a
+    user-friendly format.
+    """
+
+    try:
+        resource_response = await session.list_resources()
+
+        if not resource_response or not resource_response.resources:
+            print("\nNo resources found on the server.")
+            return
+        print("\nAvailable Resources:")
+        print("---------------------------------------")
+        for r in resource_response.resources:
+            # The URI is the unique identifier for the resource
+            print(f"    Resource URI: {r.uri}")
+            # The description comes from the resource function's docstring
+            if r.description:
+                print(f"    Description: {r.description.strip()}")
+
+        print("\nUsage: /resource <resource_uri>")
+        print("---------------------------------------")
+
+    except Exception as e:
+        print(f"Error fetching resource: {e}")
+
+
+async def handle_resource(session, command: str) -> str | None:
+    """
+    Parses a user command to fetch a specific resource from the server
+    and return its content as a single string.
+    """
+    try:
+        # The command format is "/resource <resource_uri>"
+        parts = shlex.split(command.strip())
+        if len(parts) != 2:
+            print("\nUsage: /resource <resource_uri>")
+            return None
+
+        resource_uri = parts[1]
+
+        print(f"\n--- Fetching resource '{resource_uri}'... ---")
+
+        # Use the session's `read_resource` method with the provided URI
+        response = await session.read_resource(resource_uri)
+
+        if not response or not response.contents:
+            print("Error: Resource not found or content is empty.")
+            return None
+
+        # Extract text from all TextContent objects and join them
+        # this handles cases where a resource might be split into multiple parts.
+        text_parts = [
+            content.text for content in response.contents if hasattr(content, "text")
+        ]
+
+        if not text_parts:
+            print("error: Resource content is not in a readable text format.")
+            return None
+
+        resource_content = "\n".join(text_parts)
+
+        print("--- Resource loaded successfully. ---")
+        return resource_content
+
+    except Exception as e:
+        print(f"\nAn error ocurred while fetching the resource: {e}")
+        return None
+
+
 # Entry point
 async def main():
     async with stdio_client(server_params) as (read, write):
@@ -156,8 +241,16 @@ async def main():
             print("Weather MCP agent is ready.")
             # Add instructions for the new prompt commands.
             print("Type a question, or use on of the following commands:")
-            print("     /prompts                            - to list available prompts")
-            print("     /prompt <prompt_name> \"args\"...   - to run a specific prompt")
+            print(
+                "       /prompts                              - to list available prompts"
+            )
+            print('     /prompt <prompt_name> "args"...     - to run a specific prompt')
+            print(
+                "     /resources                          - to list available resources"
+            )
+            print(
+                "     /resources <resource_uri>           - to load a resource for the agent"
+            )
 
             while True:
                 # This variable will hold the final message to be sent to the agent
@@ -169,7 +262,7 @@ async def main():
 
                 if user_input.lower() == "/prompts":
                     await list_prompts(session)
-                    continue # Command is done, loop back for next input
+                    continue  # Command is done, loop back for next input
 
                 elif user_input.startswith("/prompt"):
                     # The handle_prompt function now returns the prompt text or None
@@ -179,19 +272,56 @@ async def main():
                     else:
                         # If prompt fetching failed, loop back for next input
                         continue
+                elif user_input.lower() == "/resources":
+                    await list_resources(session)
+                    continue  # Command is donee, loop back for next input
+                elif user_input.startswith("/resources"):
+                    # Fetch the resource content using our new function
+                    resource_content = await handle_resource(session, user_input)
+
+                    if resource_content:
+                        # Ask the user what action to take on the loaded content
+                        action_prompt = input(
+                            "Resource loaded. What should I do with this content? (Press Enter to just save the context)\n"
+                        ).strip()
+
+                        if action_prompt:
+                            message_to_agent = f"""
+                            CONTEXT from a loaded resource:
+                            ---
+                            {resource_content}
+                            ---
+                            TASK: {action_prompt}
+                            """
+                        # If user provides no action, create a default message to save the content
+                        else:
+                            print(
+                                "No action specified. Adding resource content to conversation memory..."
+                            )
+                            message_to_agent = f"""
+                            Please remember the following context for our conversation. Just acknowledge that you have receive it.
+                            ---
+                            CONTEXT:
+                            {resource_content}
+                            ---
+                            """
+                    else:
+                        # If resource loading failed, loop back for next input
+                        continue
                 else:
                     # For a normal chat message, the message is just the user's input
                     message_to_agent = user_input
-                
+
                 if message_to_agent:
                     try:
                         response = await agent.ainvoke(
                             {"messages": [("user", message_to_agent)]},
-                            config = {"configurable": {"thread_id": "weather-session"}}
+                            config={"configurable": {"thread_id": "weather-session"}},
                         )
                         print("AI: ", response["messages"][-1].content)
                     except Exception as e:
                         print("Error:", e)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
