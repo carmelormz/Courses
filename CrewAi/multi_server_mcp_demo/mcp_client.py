@@ -183,6 +183,66 @@ async def handle_prompt_invocation(
         print(f"\nAn error ocurred during prompt invocation: {e}")
 
 
+async def list_all_resources(client: MultiServerMCPClient, server_configs: dict):
+    print("\nAvailable Resources form all servers:")
+    print("-------------------------")
+
+    any_resource_found = False
+
+    for server_name in server_configs.keys():
+        try:
+            async with client.session(server_name) as session:
+                resource_response = await session.list_resources()
+
+                if resource_response and resource_response.resources:
+                    any_resource_found = True
+                    print(f"\n--- Server: '{server_name}' ---")
+                    for r in resource_response.resources:
+                        print(f"    Resource URI: {r.uri}")
+                        if r.description:
+                            print(f"        Description: {r.description}")
+        except Exception as e:
+            print(f"\nCould not fetch resource from server '{server_name}': {e}")
+
+    print("\nUse: /resource <server_name> <resource_uri>")
+    print("-------------------------")
+
+    if not any_resource_found:
+        print("\nNo resources were found on any connected servers.")
+
+
+async def handle_resource_invocation(
+    client: MultiServerMCPClient, command: str
+) -> str | None:
+    try:
+        parts = command.strip().split()
+        if len(parts) != 3:
+            print("\nUsage: /resource <server_name> <resource_uri>")
+            return None
+
+        server_name = parts[1]
+        resource_uri = parts[2]
+
+        print(
+            f"\n --- Fetching resource '{resource_uri}' from server '{server_name} ---"
+        )
+
+        blobs = await client.get_resources(server_name=server_name, uris=[resource_uri])
+
+        if not blobs:
+            print(f"Error: Resource not found or content is empty.")
+            return None
+
+        resource_content = blobs[0].as_string()
+
+        print("--- Resource content loaded successfully. ---")
+        return resource_content
+
+    except Exception as e:
+        print(f"\nAn error ocurred while fetching the resource: {e}")
+        return None
+
+
 # Entry point
 async def main():
     # As per the error message, instantiate the client directly
@@ -202,6 +262,12 @@ async def main():
         " /prompts                                        - to list available prompts"
     )
     print(' /prompt <server_name> <prompt_name> "args"      - to run a specific prompt')
+    print(
+        " /resources                                      - to list available resources"
+    )
+    print(
+        " /resource <server_name> <resource_uri>          - to load a resource for the agent"
+    )
 
     while True:
         message_to_agent = ""
@@ -213,6 +279,38 @@ async def main():
         if user_input.lower() == "/prompts":
             await list_all_prompts(client, server_configs)
             continue
+        if user_input.lower() == "/resources":
+            await list_all_resources(client, server_configs)
+            continue
+        elif user_input.startswith("/resource"):
+            resource_content = await handle_resource_invocation(client, user_input)
+
+            if resource_content:
+                action_prompt = input(
+                    "Resource loaded. What should I do with this content? (Press Enter to just save to context)\n>"
+                ).strip()
+
+                if action_prompt:
+                    message_to_agent = f"""
+                    CONTEXT from a loaded resource:
+                    ---
+                    {resource_content}
+                    ---
+                    TASK: {action_prompt}
+                    """
+                else:
+                    print(
+                        "No action specified. Adding resource content to conversation memory..."
+                    )
+                    message_to_agent = f"""
+                    Please remember the following context for our conversation. Just acknowledge that you have receive it.
+                    ---
+                    CONTEXT:
+                    {resource_content}
+                    ---
+                    """
+            else:
+                continue
         elif user_input.startswith("/prompt"):
             prompt_text = await handle_prompt_invocation(client, user_input)
             if prompt_text:
@@ -225,7 +323,7 @@ async def main():
         if message_to_agent:
             try:
                 response = await agent.ainvoke(
-                    {"messages": [("user", user_input)]},
+                    {"messages": [("user", message_to_agent)]},
                     config={"configurable": {"thread_id": "multi-server-session"}},
                 )
                 print("AI:", response["messages"][-1].content)

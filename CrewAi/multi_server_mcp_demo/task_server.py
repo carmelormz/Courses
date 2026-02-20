@@ -1,6 +1,7 @@
 import os
 from mcp.server.fastmcp import FastMCP
 from typing import List
+from pathlib import Path
 
 # Define the file where tasks will be stored
 TASKS_FILE = "tasks.txt"
@@ -87,6 +88,26 @@ def plan_trip_prompt(destination: str, duration_in_days: int) -> str:
     2.  After you have formulated the plan, you MUST perform a critical action: for each individual activity or attraction in your suggested itinerary, save it to the user's task list. For example, if you suggest visiting the Louvre, you must call the tool for that specific item.
     3.  Once all the itinerary items have been added as tasks, present a friendly confirmation message to the user. Inform them that you have created a sample plan and saved it to their to-do list.
     """
+
+
+@mcp.resource("file://meeting_notes")
+def meeting_notes_resource() -> list[str]:
+    """
+    Reads a meeting notes file and returns its contents as a list of lines.
+    The notes contain discussion points and action items for an Ed Tech company.
+    """
+
+    try:
+        notes_file = Path("meeting_notes.txt")
+        if not notes_file.exists():
+            return ["Error: The meeting_notes.txt file was not found in the server."]
+
+        return notes_file.read_text(encoding="utf-8").strip().splitlines()
+
+    except Exception as e:
+        return [
+            f"An unexpected error ocurred while reading the meeting notes: {str(e)}"
+        ]
 
 
 if __name__ == "__main__":
