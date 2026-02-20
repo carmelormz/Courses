@@ -85,160 +85,102 @@ async def create_graph(tools: list) -> CompiledStateGraph[State, None, State, St
     return graph.compile(checkpointer=MemorySaver())
 
 
-async def list_prompts(session):
-    """
-    Fethces the list of available prompts from the connected server
-    and prints them in a user-friendly format.
-    """
+async def list_all_prompts(client: MultiServerMCPClient, server_configs: dict):
+    print("\nAvailable Prompts from all servers:")
+    print("-------------------------")
+
+    any_prompts_found = False
+
+    # Iterate through the names of the servers defined in your server_configs
+    for server_name in server_configs.keys():
+        try:
+            # Opening a session for a specific server to interact with its prompts
+            async with client.session(server_name) as session:
+                prompt_response = await session.list_prompts()
+
+                if prompt_response and prompt_response.prompts:
+                    any_prompts_found = True
+                    # Print a header for the server to group prompts.
+                    print(f"\n--- Server: '{server_name}' ---")
+                    for p in prompt_response.prompts:
+                        print(f"    Prompt: {p.name}")
+                        if p.arguments:
+                            args_list = [f"{arg.name}" for arg in p.arguments]
+                            print(f"        Arguments: {','.join(args_list)}")
+                        else:
+                            print(f"        Arguments: None")
+        except Exception as e:
+            print(f"\nCould not fetch prompts from server '{server_name}': {e}")
+
+    print('\nUse: /prompt <server_name> <prompt_name> "arg1" "arg2" ...')
+    print("-------------------------")
+
+    if not any_prompts_found:
+        print("\nNo prompts were found on any connected servers.")
+
+
+async def handle_prompt_invocation(
+    client: MultiServerMCPClient, command: str
+) -> str | None:
     try:
-        prompt_response = await session.list_prompts()
-
-        if not prompt_response or not prompt_response.prompts:
-            print("\nNo prompts were found on the server.")
-            return
-
-        print("\nAvailable Prompts and their Arguments:")
-        print("---------------------------------------")
-        for p in prompt_response.prompts:
-            print(f"Prompt: {p.name}")
-            if p.arguments:
-                args_list = [f" <{arg.name}>" for arg in p.arguments]
-                print(f"    Arguments: {' '.join(args_list)}")
-            else:
-                print("     Arguments: None")
-
-        print('\nUsage: /prompt <prompt_name> "arg1" "arg2" ....')
-        print("---------------------------------------")
-
-    except Exception as e:
-        print(f"Error fetching prompts: {e}")
-
-
-async def handle_prompt(session, command: str) -> str | None:
-    """
-    Parses a user command to invoke a specific prompt from the server,
-    then return the generated prompt text.
-    """
-
-    try:
+        # Use shlex to correctly parse arguments, even with spaces
         parts = shlex.split(command.strip())
-        if len(parts) < 2:
-            print(f'Usage: /prompt <prompt_name> "arg1" "arg2" ...')
+
+        # Command should be: /prompt <server_name> <prompt_name> [args...]
+        if len(parts) < 3:
+            print('\nUsage: /prompt <server_name> <prompt_name> "args1" "args2" ...')
             return None
 
-        prompt_name = parts[1]
-        user_args = parts[2:]
+        server_name = parts[1]
+        prompt_name = parts[2]
+        user_args = parts[3:]
 
-        # Get available prompts from the server to validate against"
-        prompt_def_response = await session.list_prompts()
-        if not prompt_def_response or not prompt_def_response.prompts:
-            print("\nError: Could not retrieve any prompts from the server.")
-            return None
+        # --- Validate the prompt and arguments against the specific server ---
+        prompt_def = None
+        async with client.session(server_name) as session:
+            all_prompts_resp = await session.list_prompts()
+            if all_prompts_resp and all_prompts_resp.prompts:
+                # Find the matching prompt definition
+                prompt_def = next(
+                    (p for p in all_prompts_resp.prompts if p.name == prompt_name), None
+                )
 
-        # Find the specific prompt definition the user is asking for
-        prompt_def = next(
-            (p for p in prompt_def_response.prompts if p.name == prompt_name), None
-        )
+            if not prompt_def:
+                print(
+                    f"\nError: Prompt '{prompt_name}' not found on server '{server_name}'."
+                )
+                return None
 
-        if not prompt_def:
-            print(f"\nError: Prompt '{prompt_name}' not found in server.")
-            return None
+            # Check if the number of user-provided arguments match what the prompt expects
+            if len(user_args) != len(prompt_def.arguments):
+                expected_args = [arg.name for arg in prompt_def.arguments]
+                print(
+                    f"\nError: Invalid number of arguments for prompt: '{prompt_name}"
+                )
+                print(
+                    f"Expected {len(expected_args)} arguments: {', '.join(expected_args)}"
+                )
+                return
 
-        # Check if the numer of user-provided arguments matches what the prompt expects
-        if len(user_args) != len(prompt_def.arguments):
-            expected_args = [arg.name for arg in prompt_def.arguments]
-            print(f"\nError: Invalid number of argments for prompt '{prompt_name}")
-            print(
-                f"Expected {len(expected_args)} arguments: {', '.join(expected_args)}"
+            # --- Fetch and execute the prompt ---
+            arg_dict = {
+                arg.name: val for arg, val in zip(prompt_def.arguments, user_args)
+            }
+
+            # Use the client's get_prompt method, specifying server, prompt and args
+            prompt_messages = await client.get_prompt(
+                server_name=server_name, prompt_name=prompt_name, arguments=arg_dict
             )
-            return None
 
-        # Build the argument dictionary
-        arg_dict = {arg.name: val for arg, val in zip(prompt_def.arguments, user_args)}
+            # The prompt text is the content of the first message returned
+            prompt_text = prompt_messages[0].content
 
-        # Fetch the prompt from the server using the validated name and arguments
-        prompt_response = await session.get_prompt(prompt_name, arg_dict)
+            print("\n--- Prompt loaded successfully. Preparing to execute... ---")
 
-        # Extract the text content form the response
-        prompt_text = prompt_response.messages[0].content.text
-
-        print("\n--- Prompt loaded successfully. Preparing to execute.... ---")
-        # Return the fetched text to be used by the agent
-        return prompt_text
+            # Return the fetched text instead of calling the agent
+            return prompt_text
     except Exception as e:
         print(f"\nAn error ocurred during prompt invocation: {e}")
-        return None
-
-
-async def list_resources(session):
-    """
-    Fetches the list of available resources from the connected server and prints them in a
-    user-friendly format.
-    """
-
-    try:
-        resource_response = await session.list_resources()
-
-        if not resource_response or not resource_response.resources:
-            print("\nNo resources found on the server.")
-            return
-        print("\nAvailable Resources:")
-        print("---------------------------------------")
-        for r in resource_response.resources:
-            # The URI is the unique identifier for the resource
-            print(f"    Resource URI: {r.uri}")
-            # The description comes from the resource function's docstring
-            if r.description:
-                print(f"    Description: {r.description.strip()}")
-
-        print("\nUsage: /resource <resource_uri>")
-        print("---------------------------------------")
-
-    except Exception as e:
-        print(f"Error fetching resource: {e}")
-
-
-async def handle_resource(session, command: str) -> str | None:
-    """
-    Parses a user command to fetch a specific resource from the server
-    and return its content as a single string.
-    """
-    try:
-        # The command format is "/resource <resource_uri>"
-        parts = shlex.split(command.strip())
-        if len(parts) != 2:
-            print("\nUsage: /resource <resource_uri>")
-            return None
-
-        resource_uri = parts[1]
-
-        print(f"\n--- Fetching resource '{resource_uri}'... ---")
-
-        # Use the session's `read_resource` method with the provided URI
-        response = await session.read_resource(resource_uri)
-
-        if not response or not response.contents:
-            print("Error: Resource not found or content is empty.")
-            return None
-
-        # Extract text from all TextContent objects and join them
-        # this handles cases where a resource might be split into multiple parts.
-        text_parts = [
-            content.text for content in response.contents if hasattr(content, "text")
-        ]
-
-        if not text_parts:
-            print("error: Resource content is not in a readable text format.")
-            return None
-
-        resource_content = "\n".join(text_parts)
-
-        print("--- Resource loaded successfully. ---")
-        return resource_content
-
-    except Exception as e:
-        print(f"\nAn error ocurred while fetching the resource: {e}")
-        return None
 
 
 # Entry point
@@ -254,20 +196,41 @@ async def main():
     agent = await create_graph(all_tools)
 
     print("MCP Agent is ready (connected to Weather and Task servers).")
+    # Update the instructions for the user
+    print("Type a question, or user one of the following commands:")
+    print(
+        " /prompts                                        - to list available prompts"
+    )
+    print(' /prompt <server_name> <prompt_name> "args"      - to run a specific prompt')
 
     while True:
+        message_to_agent = ""
+
         user_input = input("\nYou: ").strip()
         if user_input.lower() in {"exit", "quit", "q"}:
             break
 
-        try:
-            response = await agent.ainvoke(
-                {"messages": [("user", user_input)]},
-                config={"configurable": {"thread_id": "multi-server-session"}},
-            )
-            print("AI:", response["messages"][-1].content)
-        except Exception as e:
-            print("Error:", e)
+        if user_input.lower() == "/prompts":
+            await list_all_prompts(client, server_configs)
+            continue
+        elif user_input.startswith("/prompt"):
+            prompt_text = await handle_prompt_invocation(client, user_input)
+            if prompt_text:
+                message_to_agent = prompt_text
+            else:
+                continue
+        else:
+            message_to_agent = user_input
+
+        if message_to_agent:
+            try:
+                response = await agent.ainvoke(
+                    {"messages": [("user", user_input)]},
+                    config={"configurable": {"thread_id": "multi-server-session"}},
+                )
+                print("AI:", response["messages"][-1].content)
+            except Exception as e:
+                print("Error:", e)
 
 
 if __name__ == "__main__":
